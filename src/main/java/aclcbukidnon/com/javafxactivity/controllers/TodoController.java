@@ -1,6 +1,5 @@
 package aclcbukidnon.com.javafxactivity.controllers;
 
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -11,64 +10,80 @@ public class TodoController {
     @FXML
     private ListView<String> todoList;
 
-    @FXML
-    public void initialize(){
-        ObservableList<String> initialItems = FXCollections.observableArrayList();
-        initialItems.add("Remove Me");
+    private final ObservableList<String> todos = FXCollections.observableArrayList();
 
-        todoList.setItems(initialItems);
+    @FXML
+    public void initialize() {
+        todos.add("Remove Me");
+
+        todoList.setItems(todos);
+
         todoList.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        todoList.getSelectionModel().selectedItemProperty().addListener(
-                (obs, oldVal, newVal) ->
-                {
 
-                    if (newVal != null){
-                        onTodoListItemClick(newVal);
-                    }
+        todoList.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                String selected = todoList.getSelectionModel().getSelectedItem();
+                if (selected != null) {
+                    onTodoListItemClick(selected);
                 }
-
-        );
+            }
+        });
     }
 
-
-    private void onTodoListItemClick(String value){
-
-        var dialog = new TextInputDialog(value);
+    private void onTodoListItemClick(String value) {
+        TextInputDialog dialog = new TextInputDialog(value);
         dialog.setTitle("Update Todo");
-
+        dialog.setHeaderText("Edit your todo:");
+        dialog.setContentText("Todo:");
 
         var result = dialog.showAndWait();
-        result.ifPresent(text -> System.out.println(text));
+        result.ifPresent(text -> {
+            int selectedIndex = todoList.getSelectionModel().getSelectedIndex();
+            if (!text.trim().isEmpty() && selectedIndex >= 0) {
+                todos.set(selectedIndex, text.trim());
+            }
+        });
     }
 
-
-
     @FXML
-    protected void onCreateClick(){
-        var dialog = new TextInputDialog("");
+    protected void onCreateClick() {
+        TextInputDialog dialog = new TextInputDialog("");
         dialog.setTitle("Create New Todo");
-
+        dialog.setHeaderText("Add a new todo:");
+        dialog.setContentText("Todo:");
 
         var result = dialog.showAndWait();
-        result.ifPresent(text -> System.out.println(text));
+        result.ifPresent(text -> {
+            if (!text.trim().isEmpty()) {
+                todos.add(text.trim());
+            }
+        });
     }
 
     @FXML
-    protected void onDeleteClick(){
+    protected void onDeleteClick() {
+        int selectedIndex = todoList.getSelectionModel().getSelectedIndex();
+        if (selectedIndex < 0) {
+            Alert warning = new Alert(Alert.AlertType.WARNING);
+            warning.setTitle("No Selection");
+            warning.setHeaderText("No todo selected");
+            warning.setContentText("Please select a todo to delete.");
+            warning.showAndWait();
+            return;
+        }
 
-        var confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Confirmation Dialog");
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Delete Confirmation");
         confirm.setHeaderText("Are you sure you want to delete this todo?");
         confirm.setContentText("This action cannot be undone.");
 
         var result = confirm.showAndWait();
-        if (result.isPresent()) {
-            result.get();
-        }// User clicked OK
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            todos.remove(selectedIndex);
+        }
     }
 
     @FXML
-    protected void onListEdit(){
-
+    protected void onListEdit() {
     }
 }
